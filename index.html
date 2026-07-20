@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Painel Admin - LavaPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none !important; }
+        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen">
+
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="flex flex-col items-center justify-center min-h-screen px-4 bg-white">
+        <div class="w-full max-w-sm">
+            <h1 class="text-3xl font-extrabold text-center text-blue-600 mb-2">LavaPro Admin</h1>
+            <p class="text-center text-gray-500 mb-8">Acesso restrito</p>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="email" placeholder="E-mail Master" required 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <input type="password" id="password" placeholder="Senha" required 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-sm hover:bg-blue-700 active:bg-blue-800 transition">
+                    Entrar
+                </button>
+                <p id="loginError" class="text-red-500 text-sm text-center hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Painel Principal -->
+    <div id="dashboardScreen" class="hidden min-h-screen flex flex-col max-w-md mx-auto bg-gray-50 shadow-xl border-x border-gray-200">
+        
+        <!-- Header -->
+        <header class="bg-blue-600 text-white px-4 py-5 shadow-sm sticky top-0 z-50">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-bold">Gerenciar Assinaturas</h1>
+                <button id="logoutBtn" class="text-sm font-medium bg-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-800">Sair</button>
+            </div>
+            
+            <!-- Barra de Busca -->
+            <input type="text" id="searchInput" placeholder="Buscar por nome, responsável ou email..." 
+                class="w-full px-4 py-2.5 text-gray-900 bg-white rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </header>
+
+        <main class="flex-1 overflow-y-auto pb-10">
+            <div class="px-4 py-3 flex justify-between items-center bg-gray-100 border-b border-gray-200">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider" id="tenantCount">0 Clientes</span>
+                <button id="refreshBtn" class="text-blue-600 text-sm font-medium">Atualizar</button>
+            </div>
+            
+            <!-- Lista -->
+            <ul id="tenantsList" class="divide-y divide-gray-200 bg-white">
+                <li class="p-8 text-center text-gray-500">Carregando...</li>
+            </ul>
+        </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
