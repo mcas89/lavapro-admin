@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collectionGroup, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collectionGroup, getDocs, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA0j5-JInS16Ftb1tMm6fT50swMpUA1z8w",
@@ -80,7 +80,8 @@ searchInput.addEventListener("input", (e) => {
 
 // 4. Load
 async function loadTenants() {
-    tenantsList.innerHTML = `<li class="p-8 text-center text-blue-500 font-medium">Buscando clientes...</li>`;
+    tenantsList.innerHTML = `<li class="col-span-full p-12 text-center text-gray-500 flex flex-col items-center gap-3"><i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-500"></i> Buscando clientes...</li>`;
+    if (window.lucide) lucide.createIcons();
     allTenantsData = [];
     
     try {
@@ -94,6 +95,7 @@ async function loadTenants() {
                 let isValid = false;
                 let statusText = '';
                 let statusClass = '';
+                let statusIcon = '';
                 
                 if (data.validUntil) {
                     const validDate = new Date(data.validUntil);
@@ -103,17 +105,26 @@ async function loadTenants() {
                     
                     if (isValid) {
                         statusText = `Ativo até ${dateStr}`;
-                        statusClass = 'text-green-600 bg-green-50';
+                        statusClass = 'text-green-700 bg-green-100 border-green-200';
+                        statusIcon = 'check-circle-2';
                     } else {
                         statusText = `Vencido (${dateStr})`;
-                        statusClass = 'text-red-600 bg-red-50';
+                        statusClass = 'text-red-700 bg-red-100 border-red-200';
+                        statusIcon = 'alert-circle';
                     }
                 } else {
-                    statusText = `Vitalício`;
-                    statusClass = 'text-blue-600 bg-blue-50';
+                    statusText = `Vitalício / Sem Vencimento`;
+                    statusClass = 'text-blue-700 bg-blue-100 border-blue-200';
+                    statusIcon = 'award';
                     isValid = true;
                 }
 
+                // Cálculo de tempo de casa
+                const payments = data.paymentHistory || [];
+                const firstDate = payments.length > 0 ? new Date(payments[0].date) : (data.createdAt ? new Date(data.createdAt) : new Date());
+                const diffTime = Math.abs(new Date() - firstDate);
+                const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30));
+                
                 allTenantsData.push({
                     uid,
                     companyName: data.company?.name || "Sem Nome",
@@ -122,12 +133,16 @@ async function loadTenants() {
                     phone: data.company?.phone || "",
                     isValid,
                     statusText,
-                    statusClass
+                    statusClass,
+                    statusIcon,
+                    validUntil: data.validUntil,
+                    payments: payments.reverse(), // most recent first
+                    monthsActive: diffMonths,
+                    startDate: firstDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
                 });
             }
         });
 
-        // Ordena por ativos primeiro, depois alfabético
         allTenantsData.sort((a, b) => {
             if (a.isValid === b.isValid) return a.companyName.localeCompare(b.companyName);
             return a.isValid ? -1 : 1;
@@ -136,67 +151,139 @@ async function loadTenants() {
         renderTenants(allTenantsData);
         
     } catch (error) {
-        tenantsList.innerHTML = `<li class="p-4 text-center text-red-500">Erro: ${error.message}</li>`;
+        tenantsList.innerHTML = `<li class="col-span-full p-4 text-center text-red-500">Erro: ${error.message}</li>`;
     }
 }
+
+window.toggleHistory = (uid) => {
+    const el = document.getElementById(`history-${uid}`);
+    if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+    } else {
+        el.classList.add('hidden');
+    }
+};
 
 function renderTenants(dataArray) {
     tenantCount.textContent = `${dataArray.length} Clientes`;
     
     if (dataArray.length === 0) {
-        tenantsList.innerHTML = `<li class="p-8 text-center text-gray-400">Nenhum resultado.</li>`;
+        tenantsList.innerHTML = `<li class="col-span-full p-12 text-center text-gray-400 flex flex-col items-center gap-2"><i data-lucide="search-x" class="w-8 h-8"></i> Nenhum resultado.</li>`;
+        if (window.lucide) lucide.createIcons();
         return;
     }
 
     let html = '';
     dataArray.forEach(t => {
-        html += `
-            <li class="p-4 hover:bg-gray-50 transition">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-lg">${t.companyName}</h3>
-                        <p class="text-sm text-gray-500">${t.ownerName} &bull; ${t.email}</p>
+        const cleanPhone = t.phone ? t.phone.replace(/\D/g, '') : '';
+        const wppLink = cleanPhone ? `https://wa.me/55${cleanPhone}?text=Ol%C3%A1%20${encodeURIComponent(t.ownerName)}%2C%20aqui%20%C3%A9%20do%20suporte%20LavaPro.` : '#';
+        
+        let paymentsHtml = '';
+        if (t.payments.length === 0) {
+            paymentsHtml = `<p class="text-xs text-gray-400 text-center py-2">Nenhum pagamento registrado.</p>`;
+        } else {
+            t.payments.forEach(p => {
+                const pDate = new Date(p.date).toLocaleDateString('pt-BR');
+                paymentsHtml += `
+                    <div class="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0">
+                        <span class="text-xs text-gray-500 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${pDate}</span>
+                        <span class="text-xs font-semibold text-green-600">R$ ${p.value?.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    <span class="inline-flex px-2 py-1 rounded text-xs font-bold ${t.statusClass}">
-                        ${t.statusText}
-                    </span>
+                `;
+            });
+        }
+
+        html += `
+            <li class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition hover:shadow-md">
+                <!-- Card Header -->
+                <div class="p-4 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-lg leading-tight">${t.companyName}</h3>
+                        <p class="text-sm text-gray-500 mt-0.5">${t.ownerName}</p>
+                    </div>
+                    ${cleanPhone ? `
+                    <a href="${wppLink}" target="_blank" class="flex-shrink-0 bg-[#25D366] hover:bg-[#128C7E] text-white p-2 rounded-full transition shadow-sm" title="Chamar no WhatsApp">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    </a>
+                    ` : `
+                    <div class="flex-shrink-0 bg-gray-200 text-gray-400 p-2 rounded-full cursor-not-allowed" title="Sem telefone">
+                        <i data-lucide="phone-off" class="w-5 h-5"></i>
+                    </div>
+                    `}
                 </div>
                 
-                <div class="flex gap-2 mt-3">
-                    <button onclick="addDays('${t.uid}', 7)" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold py-2 rounded border border-gray-200 transition">
-                        +7 Dias
-                    </button>
-                    <button onclick="addDays('${t.uid}', 30)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold py-2 rounded border border-blue-200 transition">
-                        +1 Mês
-                    </button>
-                    <button onclick="blockTenant('${t.uid}')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold py-2 rounded border border-red-200 transition">
-                        Bloquear
-                    </button>
+                <!-- Card Body -->
+                <div class="p-4 flex-1 flex flex-col gap-4">
+                    
+                    <!-- Status & Metrics -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${t.statusClass}">
+                            <i data-lucide="${t.statusIcon}" class="w-4 h-4"></i> ${t.statusText}
+                        </div>
+                        
+                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Início</p>
+                            <p class="text-xs font-semibold text-gray-700">${t.startDate}</p>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Fidelidade</p>
+                            <p class="text-xs font-semibold text-gray-700">${t.monthsActive} ${t.monthsActive === 1 ? 'mês' : 'meses'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="grid grid-cols-4 gap-2 mt-auto">
+                        <button onclick="addDays('${t.uid}', 7)" title="Adicionar 7 Dias" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg transition">
+                            <span class="text-xs font-bold">+7d</span>
+                        </button>
+                        <button onclick="addDays('${t.uid}', 15)" title="Adicionar 15 Dias" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg transition">
+                            <span class="text-xs font-bold">+15d</span>
+                        </button>
+                        <button onclick="blockTenant('${t.uid}')" title="Bloquear Imediatamente" class="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="registerPayment('${t.uid}', '${t.validUntil}')" title="Registrar Pagamento Mensal" class="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition shadow-sm">
+                            <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- History Toggle -->
+                    <div class="border-t border-gray-100 pt-3">
+                        <button onclick="toggleHistory('${t.uid}')" class="w-full flex justify-between items-center text-xs font-semibold text-gray-500 hover:text-gray-700 transition">
+                            Ver Histórico de Pagamentos
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </button>
+                        
+                        <div id="history-${t.uid}" class="hidden mt-3 max-h-32 overflow-y-auto history-scroll pr-1">
+                            ${paymentsHtml}
+                        </div>
+                    </div>
                 </div>
-                ${t.phone ? `
-                <button onclick="window.open('https://wa.me/55${t.phone.replace(/\\D/g, '')}?text=Ol%C3%A1%20${encodeURIComponent(t.ownerName)}%2C%20aqui%20%C3%A9%20do%20suporte%20LavaPro.', '_blank')" class="w-full mt-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-semibold py-2 rounded transition flex items-center justify-center gap-2">
-                    Falar no WhatsApp (${t.phone})
-                </button>
-                ` : `
-                <button disabled class="w-full mt-2 bg-gray-100 text-gray-400 text-sm font-semibold py-2 rounded cursor-not-allowed">
-                    Telefone não cadastrado
-                </button>
-                `}
             </li>
         `;
     });
     
     tenantsList.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
 }
 
 // 5. Ações
 window.addDays = async (uid, days) => {
-    if (!confirm(`Adicionar ${days} dias?`)) return;
+    if (!confirm(`Confirmar adição de ${days} dias para o acesso?`)) return;
     try {
         const profileRef = doc(db, `tenants/${uid}/settings/profile`);
-        const dateToAdd = new Date();
-        dateToAdd.setDate(dateToAdd.getDate() + days);
-        await updateDoc(profileRef, { validUntil: dateToAdd.toISOString() });
+        // Precisamos buscar a data atual do banco ou usar Date.now() se vencido
+        const tenant = allTenantsData.find(t => t.uid === uid);
+        let baseDate = new Date();
+        if (tenant && tenant.validUntil) {
+            const currentValid = new Date(tenant.validUntil);
+            if (currentValid > baseDate) {
+                baseDate = currentValid;
+            }
+        }
+        
+        baseDate.setDate(baseDate.getDate() + days);
+        await updateDoc(profileRef, { validUntil: baseDate.toISOString() });
         loadTenants();
     } catch (e) {
         alert("Erro: " + e.message);
@@ -204,12 +291,54 @@ window.addDays = async (uid, days) => {
 };
 
 window.blockTenant = async (uid) => {
-    if (!confirm("Bloquear agora?")) return;
+    if (!confirm("Tem certeza que deseja bloquear o acesso agora?")) return;
     try {
         const profileRef = doc(db, `tenants/${uid}/settings/profile`);
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         await updateDoc(profileRef, { validUntil: yesterday.toISOString() });
+        loadTenants();
+    } catch (e) {
+        alert("Erro: " + e.message);
+    }
+};
+
+window.registerPayment = async (uid, currentValidStr) => {
+    const valor = prompt("Qual o valor pago? (Ex: 79.90)", "79.90");
+    if (!valor) return;
+    
+    const parsedValor = parseFloat(valor.replace(',', '.'));
+    if (isNaN(parsedValor)) {
+        alert("Valor inválido.");
+        return;
+    }
+
+    if (!confirm(`Registrar pagamento de R$ ${parsedValor.toFixed(2)} e renovar +30 dias?`)) return;
+    
+    try {
+        const profileRef = doc(db, `tenants/${uid}/settings/profile`);
+        
+        let baseDate = new Date();
+        if (currentValidStr) {
+            const currentValid = new Date(currentValidStr);
+            if (currentValid > baseDate) {
+                baseDate = currentValid;
+            }
+        }
+        
+        baseDate.setDate(baseDate.getDate() + 30);
+        
+        const paymentRecord = {
+            date: new Date().toISOString(),
+            value: parsedValor,
+            type: "Mensalidade"
+        };
+
+        await updateDoc(profileRef, { 
+            validUntil: baseDate.toISOString(),
+            paymentHistory: arrayUnion(paymentRecord)
+        });
+        
         loadTenants();
     } catch (e) {
         alert("Erro: " + e.message);
