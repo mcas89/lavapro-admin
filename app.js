@@ -173,6 +173,15 @@ function renderTenants(dataArray) {
                         Bloquear
                     </button>
                 </div>
+                ${t.phone ? `
+                <button onclick="window.open('https://wa.me/55${t.phone.replace(/\\D/g, '')}?text=Ol%C3%A1%20${encodeURIComponent(t.ownerName)}%2C%20aqui%20%C3%A9%20do%20suporte%20LavaPro.', '_blank')" class="w-full mt-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-semibold py-2 rounded transition flex items-center justify-center gap-2">
+                    Falar no WhatsApp (${t.phone})
+                </button>
+                ` : `
+                <button disabled class="w-full mt-2 bg-gray-100 text-gray-400 text-sm font-semibold py-2 rounded cursor-not-allowed">
+                    Telefone não cadastrado
+                </button>
+                `}
             </li>
         `;
     });
