@@ -180,81 +180,86 @@ function renderTenants(dataArray) {
         
         let paymentsHtml = '';
         if (t.payments.length === 0) {
-            paymentsHtml = `<p class="text-xs text-gray-400 text-center py-2">Nenhum pagamento registrado.</p>`;
+            paymentsHtml = `<p class="text-[11px] text-gray-400 text-center py-1.5">Nenhum pagamento registrado.</p>`;
         } else {
             t.payments.forEach(p => {
                 const pDate = new Date(p.date).toLocaleDateString('pt-BR');
                 paymentsHtml += `
-                    <div class="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0">
-                        <span class="text-xs text-gray-500 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${pDate}</span>
-                        <span class="text-xs font-semibold text-green-600">R$ ${p.value?.toFixed(2).replace('.', ',')}</span>
+                    <div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
+                        <span class="text-[11px] text-gray-500 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${pDate}</span>
+                        <span class="text-[11px] font-semibold text-green-600">R$ ${p.value?.toFixed(2).replace('.', ',')}</span>
                     </div>
                 `;
             });
         }
 
         html += `
-            <li class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition hover:shadow-md">
+            <li class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition hover:shadow-md text-sm">
                 <!-- Card Header -->
-                <div class="p-4 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+                <div class="p-3 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
                     <div>
-                        <h3 class="font-bold text-gray-900 text-lg leading-tight">${t.companyName}</h3>
-                        <p class="text-sm text-gray-500 mt-0.5">${t.ownerName}</p>
+                        <h3 class="font-bold text-gray-900 text-base leading-tight">${t.companyName}</h3>
+                        <p class="text-xs text-gray-700 mt-0.5">${t.ownerName}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1"><i data-lucide="mail" class="w-3 h-3"></i> ${t.email}</p>
                     </div>
                     ${cleanPhone ? `
-                    <a href="${wppLink}" target="_blank" class="flex-shrink-0 bg-[#25D366] hover:bg-[#128C7E] text-white p-2 rounded-full transition shadow-sm" title="Chamar no WhatsApp">
-                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    <a href="${wppLink}" target="_blank" class="flex-shrink-0 bg-[#25D366] hover:bg-[#128C7E] text-white p-1.5 rounded-full transition shadow-sm" title="Chamar no WhatsApp">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
                     </a>
                     ` : `
-                    <div class="flex-shrink-0 bg-gray-200 text-gray-400 p-2 rounded-full cursor-not-allowed" title="Sem telefone">
-                        <i data-lucide="phone-off" class="w-5 h-5"></i>
+                    <div class="flex-shrink-0 bg-gray-200 text-gray-400 p-1.5 rounded-full cursor-not-allowed" title="Sem telefone">
+                        <i data-lucide="phone-off" class="w-4 h-4"></i>
                     </div>
                     `}
                 </div>
                 
                 <!-- Card Body -->
-                <div class="p-4 flex-1 flex flex-col gap-4">
+                <div class="p-3 flex-1 flex flex-col gap-3">
                     
                     <!-- Status & Metrics -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="col-span-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${t.statusClass}">
-                            <i data-lucide="${t.statusIcon}" class="w-4 h-4"></i> ${t.statusText}
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2 flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold border ${t.statusClass}">
+                            <i data-lucide="${t.statusIcon}" class="w-3 h-3"></i> ${t.statusText}
                         </div>
                         
-                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Início</p>
-                            <p class="text-xs font-semibold text-gray-700">${t.startDate}</p>
+                        <div class="bg-gray-50 p-1.5 rounded border border-gray-100">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Início</p>
+                            <p class="text-[11px] font-semibold text-gray-700">${t.startDate}</p>
                         </div>
-                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Fidelidade</p>
-                            <p class="text-xs font-semibold text-gray-700">${t.monthsActive} ${t.monthsActive === 1 ? 'mês' : 'meses'}</p>
+                        <div class="bg-gray-50 p-1.5 rounded border border-gray-100">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Tempo</p>
+                            <p class="text-[11px] font-semibold text-gray-700">${t.monthsActive} ${t.monthsActive === 1 ? 'mês' : 'meses'}</p>
                         </div>
                     </div>
 
                     <!-- Actions -->
-                    <div class="grid grid-cols-4 gap-2 mt-auto">
-                        <button onclick="addDays('${t.uid}', 7)" title="Adicionar 7 Dias" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg transition">
-                            <span class="text-xs font-bold">+7d</span>
+                    <div class="grid grid-cols-3 gap-1.5 mt-auto">
+                        <button onclick="addDays('${t.uid}', 7)" title="Adicionar 7 Dias" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded transition">
+                            <span class="text-[11px] font-bold">+7d</span>
                         </button>
-                        <button onclick="addDays('${t.uid}', 15)" title="Adicionar 15 Dias" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg transition">
-                            <span class="text-xs font-bold">+15d</span>
+                        <button onclick="addDays('${t.uid}', 15)" title="Adicionar 15 Dias" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded transition">
+                            <span class="text-[11px] font-bold">+15d</span>
                         </button>
-                        <button onclick="blockTenant('${t.uid}')" title="Bloquear Imediatamente" class="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition">
-                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        <button onclick="addDays('${t.uid}', 30)" title="Adicionar 30 Dias" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 py-1.5 rounded transition">
+                            <span class="text-[11px] font-bold">+30d</span>
                         </button>
-                        <button onclick="registerPayment('${t.uid}', '${t.validUntil}')" title="Registrar Pagamento Mensal" class="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition shadow-sm">
-                            <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                        
+                        <button onclick="blockTenant('${t.uid}')" title="Bloquear Imediatamente" class="col-span-1 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 py-1.5 rounded transition">
+                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="registerPayment('${t.uid}', '${t.validUntil}')" title="Registrar Pagamento" class="col-span-2 flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded transition shadow-sm">
+                            <i data-lucide="dollar-sign" class="w-3.5 h-3.5"></i> <span class="text-[11px] font-bold">Pagar (+30d)</span>
                         </button>
                     </div>
 
                     <!-- History Toggle -->
-                    <div class="border-t border-gray-100 pt-3">
-                        <button onclick="toggleHistory('${t.uid}')" class="w-full flex justify-between items-center text-xs font-semibold text-gray-500 hover:text-gray-700 transition">
-                            Ver Histórico de Pagamentos
-                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <div class="border-t border-gray-100 pt-2">
+                        <button onclick="toggleHistory('${t.uid}')" class="w-full flex justify-between items-center text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition">
+                            Ver Pagamentos
+                            <i data-lucide="chevron-down" class="w-3 h-3"></i>
                         </button>
                         
-                        <div id="history-${t.uid}" class="hidden mt-3 max-h-32 overflow-y-auto history-scroll pr-1">
+                        <div id="history-${t.uid}" class="hidden mt-2 max-h-24 overflow-y-auto history-scroll pr-1">
                             ${paymentsHtml}
                         </div>
                     </div>
@@ -267,9 +272,63 @@ function renderTenants(dataArray) {
     if (window.lucide) lucide.createIcons();
 }
 
+// Custom UI Functions
+function showConfirm(title, message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("confirmModal");
+        document.getElementById("confirmTitle").textContent = title;
+        document.getElementById("confirmMessage").textContent = message;
+        modal.classList.remove("hidden");
+
+        const btnOk = document.getElementById("confirmOkBtn");
+        const btnCancel = document.getElementById("confirmCancelBtn");
+        
+        const cleanup = () => {
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            modal.classList.add("hidden");
+        };
+        
+        const onOk = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        
+        btnOk.addEventListener("click", onOk);
+        btnCancel.addEventListener("click", onCancel);
+    });
+}
+
+function showPrompt(title, message, defaultValue = "") {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("promptModal");
+        const input = document.getElementById("promptInput");
+        
+        document.getElementById("promptTitle").textContent = title;
+        document.getElementById("promptMessage").textContent = message;
+        input.value = defaultValue;
+        modal.classList.remove("hidden");
+        setTimeout(() => input.focus(), 100);
+
+        const btnOk = document.getElementById("promptOkBtn");
+        const btnCancel = document.getElementById("promptCancelBtn");
+        
+        const cleanup = () => {
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            modal.classList.add("hidden");
+        };
+        
+        const onOk = () => { cleanup(); resolve(input.value); };
+        const onCancel = () => { cleanup(); resolve(null); };
+        
+        btnOk.addEventListener("click", onOk);
+        btnCancel.addEventListener("click", onCancel);
+    });
+}
+
 // 5. Ações
 window.addDays = async (uid, days) => {
-    if (!confirm(`Confirmar adição de ${days} dias para o acesso?`)) return;
+    const confirmed = await showConfirm("Prorrogar Vencimento", `Adicionar ${days} dias para este cliente?`);
+    if (!confirmed) return;
     try {
         const profileRef = doc(db, `tenants/${uid}/settings/profile`);
         // Precisamos buscar a data atual do banco ou usar Date.now() se vencido
@@ -291,7 +350,8 @@ window.addDays = async (uid, days) => {
 };
 
 window.blockTenant = async (uid) => {
-    if (!confirm("Tem certeza que deseja bloquear o acesso agora?")) return;
+    const confirmed = await showConfirm("Bloquear Cliente", "Tem certeza que deseja bloquear o acesso agora?");
+    if (!confirmed) return;
     try {
         const profileRef = doc(db, `tenants/${uid}/settings/profile`);
         const yesterday = new Date();
@@ -304,7 +364,7 @@ window.blockTenant = async (uid) => {
 };
 
 window.registerPayment = async (uid, currentValidStr) => {
-    const valor = prompt("Qual o valor pago? (Ex: 79.90)", "79.90");
+    const valor = await showPrompt("Registrar Pagamento", "Qual o valor pago? (Ex: 79.90)", "79.90");
     if (!valor) return;
     
     const parsedValor = parseFloat(valor.replace(',', '.'));
@@ -313,7 +373,8 @@ window.registerPayment = async (uid, currentValidStr) => {
         return;
     }
 
-    if (!confirm(`Registrar pagamento de R$ ${parsedValor.toFixed(2)} e renovar +30 dias?`)) return;
+    const confirmed = await showConfirm("Confirmar Pagamento", `Registrar pagamento de R$ ${parsedValor.toFixed(2)} e renovar +30 dias?`);
+    if (!confirmed) return;
     
     try {
         const profileRef = doc(db, `tenants/${uid}/settings/profile`);
